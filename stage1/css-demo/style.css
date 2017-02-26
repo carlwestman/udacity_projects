@@ -1,0 +1,42 @@
+*{
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+* {
+   outline: 1px solid red !important;
+}
+
+img{
+  margin-right: 25px;
+}
+
+.header{
+  background-color: #33BEBE;
+}
+
+h1{
+  padding-top: 15px;
+  padding-left: 10px;
+  color: white;
+  font-family: sans-serif;
+  font-weight: 100;
+
+}
+
+.app{
+  display: -webkit-flex;
+  display: flex;
+}
+
+.screenshot{
+  max-width: 460px;
+}
+
+.description{
+  max-width: 705px;
+  color: #7C8B88;
+  font-size: 25px;
+}
