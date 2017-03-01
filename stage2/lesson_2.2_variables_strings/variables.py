@@ -10,9 +10,10 @@
 
 # https://classroom.udacity.com/nanodegrees/nd000/parts/0001345403/modules/356813882475460/lessons/4192698630/concepts/48904185560923
 
-speed_of_light = 299792458.0
+speed_of_light = 299792458.0 #meters per second
 billionth = 1.0 / 1000000000.0
-nanostick = speed_of_light * billionth * 100
-print nanostick
+cm_meter = 100 # cm per meter
+nanostick = speed_of_light * billionth * cm_meter
+print(nanostick)
 
 # Add your own code and notes here
