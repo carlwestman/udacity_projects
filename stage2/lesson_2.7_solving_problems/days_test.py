@@ -45,6 +45,10 @@ def part_year_compensation(y, m, d, part=2):
 
 def daysBetweenDates(y1, m1, d1, y2, m2, d2):
 
+    #Validate input, y2, m2, d2 must be after y1, m1, d1 and must be within date range
+
+
+
     # Calc days of whole years, ie. excluding first and last year
     y = y1 + 1
     full_year_days = 0
