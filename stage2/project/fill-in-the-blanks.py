@@ -1,5 +1,6 @@
 import types
 import sys
+import unittest
 
 NUMBER_LEVELS = 3
 MAX_ERRORS = 5
@@ -9,6 +10,7 @@ LEVEL_3_TEXT_W_BLANKS = "Python __1__ are available for many operating __2__, al
 LEVEL_1_MISSING_WORDS = ["language", "programming", "readability", "whitespace", "fewer"]
 LEVEL_2_MISSING_WORDS = ["dynamic", "memory", "programming", "functional", "library"]
 LEVEL_3_MISSING_WORDS = ["interpreters", "systems", "Python", "implementation", "open", "development"]
+
 
 def main():
     levels_played = 0
@@ -20,154 +22,155 @@ def main():
 
     while current_level <= NUMBER_LEVELS:
 
-        # Print intro message
-        intro_msg(levels_played=levels_played, current_level=current_level, attempts=attempts)
+        # Print intro message depending on users previous game history
+        print intro_msg(levels_played=levels_played, current_level=current_level, attempts=attempts)
         # get text and stuff for current_level
         text, corrected_text, missing_words = get_level_text(level=current_level)
         # play Level
         level_outcome = play_level(text=text, corrected_text=corrected_text, missing_words=missing_words)
-        1
-        if level_outcome[0] == -1:
-            print ""
-            print "D*mn*t, you failed..."
-            again = raw_input("Do you want to try again? Type 'yes' or 'no'.") #TODO VALIDATE INPUT
-            if again == 'yes':
-                attempts += 1
+        # Handle Level outcome and decide where to go from here
+        cont, current_level, attempts, levels_played = handle_level_outcome(level_outcome=level_outcome,
+                                                                            current_level=current_level,
+                                                                            attempts=attempts,
+                                                                            levels_played=levels_played)
+
+        # If user doesn't want to continue exit game
+        if not cont:
+            sys.exit("Come back soon!")
+
+
+def handle_level_outcome(level_outcome, current_level, attempts, levels_played):
+    # Input: 0, 1
+    # output tuple: BOOL, INT, INT, INT
+    # BOOL = Continue to play
+    # INT 1 -> Current_level
+    # INT 2 -> Attempts
+    # INT 3 -> Levels played
+    if level_outcome == -1:
+        print "\nD*mn*t, you failed..."
+        again = raw_input("Do you want to try again? Type 'yes' to try again. Type anything else to exit.")
+        if again.lower() == 'yes':
+            return True, current_level, attempts + 1, levels_played
+        else:
+            return False, 0, 0, 0
+
+    elif level_outcome == 1:
+        if current_level < NUMBER_LEVELS:
+            next_lev = raw_input(
+                "\nYou finished level " + str(current_level) + ". Wanna play the next level? Type 'yes' to try again. Type anything else to exit.")
+            if next_lev == 'yes':
+                return True, current_level + 1, 0, levels_played + 1
+            elif next == 'no':
+                return False, 0, 0, 0
+        else:
+            start_over = raw_input(
+                "\nI need to add some more levels, you've finished them all!! Want to start over? Type 'yes' to start over. Type anything else to exit.")
+            if start_over == 'yes':
+                return True, 0, 0, 0
             else:
-                print ""
-                print "Ok, sorry to see you go. Come back soon. BTW, the correct answer was:"
-                string_w_new_line(level_outcome[1])
-                sys.exit()
-        elif level_outcome[0] == 1:
-            levels_played += 1
-            print "Great work!!"
-            if current_level < NUMBER_LEVELS:
-                print ""
-                next = raw_input("Want to play the next level? Type 'yes' or 'no'.") #TODO VALIDATE INPUT
-                if next == 'yes':
-                    current_level += 1
-                    attempts = 0
-                elif next == 'no':
-                    print "Ok, come back soon."
-                    sys.exit()
-            else:
-                print ""
-                start_over = raw_input("I need to add some more levels!! Want to start over? Type 'yes' or 'no'.") #TODO VALIDATE INPUT
-                if start_over == 'yes':
-                    current_level = 0
-                    attempts = 0
-                    levels_played = 0
+                return False, 0, 0, 0
 
 
-
-
-#
 def play_level(text, corrected_text, missing_words):
     # input: Text with blanks, corrected text with filled blanks, missing words list
     # output:
-    #       failed to complete each word in less than MAX_ERROR tries --> -1, correct_text
-    #       Completed each word in less than MAX_ERROR tries --> 1, correct_text
+    #       failed to complete each word in less than MAX_ERROR tries --> -1
+    #       Completed each word in less than MAX_ERROR tries --> 1
     correct_answers = 0
     while text != corrected_text:
-        print ""
-        string_w_new_line(text)
-        print ""
-        print "What do you think fits in the blank with placeholder: __" + str(correct_answers+1) + "__"
+        print string_w_new_line(text)
+        print "\nWhat word do you think fits in the blank with placeholder: __" + str(correct_answers + 1) + "__"
         answer = raw_input("Your answer:")
         tries = 0
         while answer != missing_words[correct_answers]:
-            tries += 1 # increment tries for each loop where answer is wrong
-            print ""
-            string_w_new_line(text)
-            print ""
-            print "Oops, that was incorrect. Try again. You have " + str(MAX_ERRORS - tries) + " tries left."
-            print "What do you think fits in the blank with placeholder: __" + str(correct_answers + 1) + "__"
+            tries += 1  # increment tries for each loop where answer is wrong
+            print "\n" + string_w_new_line(text)
+            print "\nOops, that was incorrect. Try again. You have " + str(MAX_ERRORS - tries) + " tries left."
+            print "What word do you think fits in the blank with placeholder: __" + str(correct_answers + 1) + "__"
             answer = raw_input("Your answer:")
-            if tries >= MAX_ERRORS:
-                return -1, corrected_text
-        correct_answers += 1 # increment on correct answer
+            if tries >= MAX_ERRORS - 1:
+                return -1
+        correct_answers += 1  # increment on correct answer
         text = replace_blanks(text=text, num_correct_answers=correct_answers, missing_words=missing_words)
-    return 1, corrected_text
+        print "\nCorrect! Great work!"
+    return 1
 
 
 def choose_level():
     # input: none
     # output: valid level, int
-    # Error, if user fails more than 3 times exit game with snooty error msg
+    # Error, if user fails more than MAX_ERRORS times exit game with snooty error msg
     level = None
     tries = 0
-    while level not in [1, 2, 3]:
-        if tries > 0 and tries < 3:
-            print ""
-            print "Oops, invalid input, try again."
-        elif tries >= 3:
+    while level not in range(1, NUMBER_LEVELS + 1):
+        if tries in range(1, MAX_ERRORS):
+            print "\nOops, invalid input, try again."
+        if tries >= MAX_ERRORS:
             sys.exit("You suck at following instructions ;-). The game will now exit.")
         level = validate_level(raw_input("What level would you like to start from? Choose level 1, 2 or 3:"))
         tries += 1
     return level
 
+
 def validate_level(choosen_level):
     # input raw input STR
     # output : level as int or -1 for error
-    if choosen_level in ['1','2','3']:
+    if choosen_level in str_level_list():
         return int(choosen_level)
     else:
         return -1
+
 
 def get_level_text(level):
     # input: Int repr. of level
     # output: Tuple: text with blanks, correct_text, list of missing words
     # ERROR = -1, -1, -1
     if level == 1:
-        correct_text = replace_blanks(text=LEVEL_1_TEXT_W_BLANKS, missing_words=LEVEL_1_MISSING_WORDS, all=True) #TODO
+        correct_text = replace_blanks(text=LEVEL_1_TEXT_W_BLANKS, missing_words=LEVEL_1_MISSING_WORDS, all=True)
         return LEVEL_1_TEXT_W_BLANKS, correct_text, LEVEL_1_MISSING_WORDS
     elif level == 2:
-        correct_text = replace_blanks(text=LEVEL_2_TEXT_W_BLANKS, missing_words=LEVEL_2_MISSING_WORDS, all=True)  # TODO
+        correct_text = replace_blanks(text=LEVEL_2_TEXT_W_BLANKS, missing_words=LEVEL_2_MISSING_WORDS, all=True)
         return LEVEL_2_TEXT_W_BLANKS, correct_text, LEVEL_2_MISSING_WORDS
     elif level == 3:
-        correct_text = replace_blanks(text=LEVEL_3_TEXT_W_BLANKS, missing_words=LEVEL_3_MISSING_WORDS, all=True)  # TODO
+        correct_text = replace_blanks(text=LEVEL_3_TEXT_W_BLANKS, missing_words=LEVEL_3_MISSING_WORDS, all=True)
         return LEVEL_3_TEXT_W_BLANKS, correct_text, LEVEL_3_MISSING_WORDS
     else:
         return -1, -1, -1
+
 
 def replace_blanks(text, missing_words, num_correct_answers=0, all=False):
     # input: text with blanks, list of missing words, number of correct answers(default=0) int, all(default=false) if true will replace all missing words bool
     #   num_correct_answers cannot assume value 0 if all = false and vice versa, returns error
     # output text with correct words placed in blanks
     # error = -1
-    if not isinstance(text, types.StringType)\
-            or not isinstance(missing_words, types.ListType)\
-            or not isinstance(num_correct_answers, types.IntType)\
+    if not isinstance(text, types.StringType) \
+            or not isinstance(missing_words, types.ListType) \
+            or not isinstance(num_correct_answers, types.IntType) \
             or not isinstance(all, types.BooleanType):
         return -1
     elif num_correct_answers == 0 and all is False:
         return -1
 
     if all:
-        i = 0
-        while i < len(missing_words):
-            # construct place_holder
-            placeholder = "__" + str(i+1) + "__"
-            text = text.replace(placeholder, missing_words[i])
-            i += 1
+        for i, word in enumerate(missing_words):
+            placeholder = "__" + str(i + 1) + "__"  # construct place_holder
+            text = text.replace(placeholder, word)  # replace placeholder with word
         return text
     else:
         placeholder = "__" + str(num_correct_answers) + "__"
-        return text.replace(placeholder, missing_words[num_correct_answers-1])
+        return text.replace(placeholder, missing_words[num_correct_answers - 1])
+
 
 def intro_msg(levels_played, current_level, attempts):
     # Prints appropriate message depending on where in game user is
     # 3 possible outcomes, all cases should be covered given that inputs are INTs
     if levels_played == 0 and attempts == 0:
-        print ""
-        print "Great, you've chosen to start on level " + str(current_level) + "."
-        print "Here is you first challenge: "
+        return "\nGreat, you've chosen to start on level " + str(current_level) + ".\nHere is you first challenge: "
     elif levels_played > 0 and attempts == 0:
-        print ""
-        print "You want more, huh! Here's your next challenge: "
+        return "\nYou want more, huh! Here's your next challenge: "
     else:
-        print ""
-        print "Great, lets try again."
+        return "\nGreat, lets try again"
+
 
 def string_w_new_line(string):
     # Input string
@@ -175,20 +178,85 @@ def string_w_new_line(string):
     text_with_line_break = ""
     words_per_line = 10
     word_list = string.split()
-    i = 0
-    i_w = 1
-    for word in word_list:
-        if i_w < len(word_list):
-            text_with_line_break += word + " "
-        else:
-            text_with_line_break += word
-        i += 1
-        if i == words_per_line:
+    for i, word in enumerate(word_list):
+        if (i % words_per_line) == 0 and i != 0:
             text_with_line_break += "\n"
-            i = 0
 
-    print text_with_line_break
+        text_with_line_break += word + " "
+
+    return text_with_line_break
 
 
+
+def str_level_list():
+    res = []
+    for level in range(1, NUMBER_LEVELS + 1):
+        res.append(str(level))
+    return res
+
+
+# Run the program
 main()
+
+
+# Tests
+class TestTestableFuncs(unittest.TestCase):
+    def test_validate_level(self):
+        self.assertEqual(validate_level('1'), 1)
+        self.assertEqual(validate_level('2'), 2)
+        self.assertEqual(validate_level('3'), 3)
+        self.assertEqual(validate_level(1), -1)
+        self.assertEqual(validate_level('a'), -1)
+        self.assertEqual(validate_level(True), -1)
+
+    def test_replace_blanks(self):
+        self.assertEqual(replace_blanks(text="word __1__ word",
+                                        missing_words=["missing"],
+                                        all=True),
+                         "word missing word")
+        self.assertEqual(replace_blanks(text="word __1__ word",
+                                        missing_words=["missing"],
+                                        num_correct_answers=1),
+                         "word missing word")
+
+        self.assertEqual(replace_blanks(text="word __1__ word",
+                                        missing_words=["missing"]),
+                         -1)
+
+        self.assertEqual(replace_blanks(text="a __1__ b __2__ c __3__ d __4__",
+                                        missing_words=["word1", "word2", "word3", "word4"],
+                                        all=True),
+                         "a word1 b word2 c word3 d word4")
+
+        self.assertEqual(replace_blanks(text="word __2__ word",
+                                        missing_words=["word","missing"],
+                                        num_correct_answers=2),
+                         "word missing word")
+
+    def test_intro_msg(self):
+        self.assertEqual(intro_msg(levels_played=0,
+                                   current_level=1,
+                                   attempts=0),
+                         "\nGreat, you've chosen to start on level 1.\nHere is you first challenge: ")
+        self.assertEqual(intro_msg(levels_played=1,
+                                   current_level=1,
+                                   attempts=0),
+                         "\nYou want more, huh! Here's your next challenge: ")
+        self.assertEqual(intro_msg(levels_played=1,
+                                   current_level=1,
+                                   attempts=1),
+                         "\nGreat, lets try again")
+
+    def test_string_w_new_line(self):
+        # Will fail if LEVEL_2_TEXT_W_BLANKS IS CHANGED
+        self.assertEqual(string_w_new_line(string=LEVEL_2_TEXT_W_BLANKS), "Python features a __1__ type system and automatic __2__ management \nand supports multiple __3__ paradigms, including object-oriented, imperative, __4__ programming, \nand procedural styles. It has a large and comprehensive standard \n__5__. ")
+
+    def test_str_level_list(self):
+        # Will fail if NUMBER_LEVELS != 3
+        self.assertEqual(str_level_list(), ['1', '2', '3'])
+
+"""
+if __name__ == '__main__':
+    unittest.main()
+"""
 
