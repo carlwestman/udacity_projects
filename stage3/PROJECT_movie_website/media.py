@@ -1,5 +1,17 @@
 import webbrowser
 
+"""
+    Module defines 3 classes:
+        media 
+        Movie
+        TvShow
+        
+    media is the Parent class of Movie and TvShow.
+    
+    To Do:
+        Extend with other media type classes ie: music, podcasts etc etc.
+        To do this media may need to be changed to fit as parent.
+"""
 
 class media():
     """ 
