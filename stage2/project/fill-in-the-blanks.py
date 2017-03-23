@@ -10,6 +10,12 @@ LEVEL_3_TEXT_W_BLANKS = "Python __1__ are available for many operating __2__, al
 LEVEL_1_MISSING_WORDS = ["language", "programming", "readability", "whitespace", "fewer"]
 LEVEL_2_MISSING_WORDS = ["dynamic", "memory", "programming", "functional", "library"]
 LEVEL_3_MISSING_WORDS = ["interpreters", "systems", "Python", "implementation", "open", "development"]
+LEVEL_TEXT_LIST = [LEVEL_1_TEXT_W_BLANKS,
+                   LEVEL_2_TEXT_W_BLANKS,
+                   LEVEL_3_TEXT_W_BLANKS]
+MISSING_WORDS_LIST = [LEVEL_1_MISSING_WORDS,
+                      LEVEL_2_MISSING_WORDS,
+                      LEVEL_3_MISSING_WORDS]
 
 
 def main():
@@ -23,17 +29,20 @@ def main():
     while current_level <= NUMBER_LEVELS:
 
         # Print intro message depending on users previous game history
-        print intro_msg(levels_played=levels_played, current_level=current_level, attempts=attempts)
+        print intro_msg(levels_played=levels_played,
+                        current_level=current_level,
+                        attempts=attempts)
         # get text and stuff for current_level
         text, corrected_text, missing_words = get_level_text(level=current_level)
         # play Level
-        level_outcome = play_level(text=text, corrected_text=corrected_text, missing_words=missing_words)
+        level_outcome = play_level(text=text,
+                                   corrected_text=corrected_text,
+                                   missing_words=missing_words)
         # Handle Level outcome and decide where to go from here
         cont, current_level, attempts, levels_played = handle_level_outcome(level_outcome=level_outcome,
                                                                             current_level=current_level,
                                                                             attempts=attempts,
                                                                             levels_played=levels_played)
-
         # If user doesn't want to continue exit game
         if not cont:
             sys.exit("Come back soon!")
@@ -47,28 +56,51 @@ def handle_level_outcome(level_outcome, current_level, attempts, levels_played):
     # INT 2 -> Attempts
     # INT 3 -> Levels played
     if level_outcome == -1:
-        print "\nD*mn*t, you failed..."
-        again = raw_input("Do you want to try again? Type 'yes' to try again. Type anything else to exit.")
-        if again.lower() == 'yes':
-            return True, current_level, attempts + 1, levels_played
+        return handel_loss(current_level, attempts, levels_played)
+    elif level_outcome == 1:
+        return handel_win(current_level, attempts, levels_played)
+
+
+def handel_win(current_level, attempts, levels_played):
+    # prints out success msg, asks user if they want to play next level
+    #   or start over again
+    # input: Current_level (int), Attempts (int), Levels_played (int)
+    # output tuple: BOOL, INT, INT, INT
+    # BOOL = Continue to play
+    # INT 1 -> Current_level
+    # INT 2 -> Attempts
+    # INT 3 -> Levels played
+    if current_level < NUMBER_LEVELS:
+        next_lev = raw_input(
+            "\nYou finished level " + str(
+                current_level) + ". Wanna play the next level? Type 'yes' to try again. Type anything else to exit.")
+        if next_lev == 'yes':
+            return True, current_level + 1, 0, levels_played + 1
+        elif next == 'no':
+            return False, 0, 0, 0
+    else:
+        start_over = raw_input(
+            "\nI need to add some more levels, you've finished them all!! Want to start over? Type 'yes' to start over. Type anything else to exit.")
+        if start_over == 'yes':
+            return True, 1, 0, 0
         else:
             return False, 0, 0, 0
 
-    elif level_outcome == 1:
-        if current_level < NUMBER_LEVELS:
-            next_lev = raw_input(
-                "\nYou finished level " + str(current_level) + ". Wanna play the next level? Type 'yes' to try again. Type anything else to exit.")
-            if next_lev == 'yes':
-                return True, current_level + 1, 0, levels_played + 1
-            elif next == 'no':
-                return False, 0, 0, 0
-        else:
-            start_over = raw_input(
-                "\nI need to add some more levels, you've finished them all!! Want to start over? Type 'yes' to start over. Type anything else to exit.")
-            if start_over == 'yes':
-                return True, 0, 0, 0
-            else:
-                return False, 0, 0, 0
+
+def handel_loss(current_level, attempts, levels_played):
+    # prints out fail msg, asks user if they want to try again
+    # input: Current_level (int), Attempts (int), Levels_played (int)
+    # output tuple: BOOL, INT, INT, INT
+    # BOOL = Continue to play
+    # INT 1 -> Current_level
+    # INT 2 -> Attempts
+    # INT 3 -> Levels played
+    print "\nD*mn*t, you failed..."
+    again = raw_input("Do you want to try again? Type 'yes' to try again. Type anything else to exit.")
+    if again.lower() == 'yes':
+        return True, current_level, attempts + 1, levels_played
+    else:
+        return False, 0, 0, 0
 
 
 def play_level(text, corrected_text, missing_words):
@@ -83,13 +115,13 @@ def play_level(text, corrected_text, missing_words):
         answer = raw_input("Your answer:")
         tries = 0
         while answer != missing_words[correct_answers]:
+            if tries >= MAX_ERRORS - 1:
+                return -1
             tries += 1  # increment tries for each loop where answer is wrong
             print "\n" + string_w_new_line(text)
             print "\nOops, that was incorrect. Try again. You have " + str(MAX_ERRORS - tries) + " tries left."
             print "What word do you think fits in the blank with placeholder: __" + str(correct_answers + 1) + "__"
             answer = raw_input("Your answer:")
-            if tries >= MAX_ERRORS - 1:
-                return -1
         correct_answers += 1  # increment on correct answer
         text = replace_blanks(text=text, num_correct_answers=correct_answers, missing_words=missing_words)
         print "\nCorrect! Great work!"
@@ -125,22 +157,20 @@ def get_level_text(level):
     # input: Int repr. of level
     # output: Tuple: text with blanks, correct_text, list of missing words
     # ERROR = -1, -1, -1
-    if level == 1:
-        correct_text = replace_blanks(text=LEVEL_1_TEXT_W_BLANKS, missing_words=LEVEL_1_MISSING_WORDS, all=True)
-        return LEVEL_1_TEXT_W_BLANKS, correct_text, LEVEL_1_MISSING_WORDS
-    elif level == 2:
-        correct_text = replace_blanks(text=LEVEL_2_TEXT_W_BLANKS, missing_words=LEVEL_2_MISSING_WORDS, all=True)
-        return LEVEL_2_TEXT_W_BLANKS, correct_text, LEVEL_2_MISSING_WORDS
-    elif level == 3:
-        correct_text = replace_blanks(text=LEVEL_3_TEXT_W_BLANKS, missing_words=LEVEL_3_MISSING_WORDS, all=True)
-        return LEVEL_3_TEXT_W_BLANKS, correct_text, LEVEL_3_MISSING_WORDS
+    if level in [1, 2, 3]:
+        text = LEVEL_TEXT_LIST[level-1]
+        missing_words = MISSING_WORDS_LIST[level-1]
+        correct_text = replace_blanks(text, missing_words, all=True)
+        return text, correct_text, missing_words
     else:
         return -1, -1, -1
 
 
 def replace_blanks(text, missing_words, num_correct_answers=0, all=False):
-    # input: text with blanks, list of missing words, number of correct answers(default=0) int, all(default=false) if true will replace all missing words bool
-    #   num_correct_answers cannot assume value 0 if all = false and vice versa, returns error
+    # input: text with blanks, list of missing words, number of correct
+    # answers(default=0) int, all(default=false) if true will replace all
+    #   missing words bool num_correct_answers cannot assume value 0 if
+    #   all = false and vice versa, returns error
     # output text with correct words placed in blanks
     # error = -1
     if not isinstance(text, types.StringType) \
@@ -187,8 +217,10 @@ def string_w_new_line(string):
     return text_with_line_break
 
 
-
 def str_level_list():
+    # No input
+    # Output
+    #   List of levels as strings
     res = []
     for level in range(1, NUMBER_LEVELS + 1):
         res.append(str(level))
@@ -229,7 +261,7 @@ class TestTestableFuncs(unittest.TestCase):
                          "a word1 b word2 c word3 d word4")
 
         self.assertEqual(replace_blanks(text="word __2__ word",
-                                        missing_words=["word","missing"],
+                                        missing_words=["word", "missing"],
                                         num_correct_answers=2),
                          "word missing word")
 
@@ -259,4 +291,3 @@ class TestTestableFuncs(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 """
-
